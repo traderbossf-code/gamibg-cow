@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Auto Ads</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<!-- AdsBitvex Script -->
+<script src="https://mzedrmdgzuonhulzzssx.supabase.co/functions/v1/ad-script?appid=b1be9ba9-258"></script>
+
+<style>
+body{
+  margin:0;height:100vh;display:flex;justify-content:center;align-items:center;
+  background:#111;color:#fff;font-family:sans-serif;
+}
+.card{
+  background:#222;padding:20px;border-radius:15px;text-align:center;
+}
+button{
+  padding:12px 18px;border:none;border-radius:10px;
+  background:#00e5ff;color:#000;font-weight:bold;cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>🧠 Smart Auto Ads</h2>
+
+  <button onclick="startAuto()">▶ Start</button>
+
+  <p>Next Ad in: <span id="timer">25</span>s</p>
+  <p>Status: <span id="status">Idle</span></p>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+
+// 🔧 Settings
+let baseDelay = 25;
+let maxDelay = 60;
+let currentDelay = localStorage.getItem("delay") 
+  ? parseInt(localStorage.getItem("delay")) 
+  : baseDelay;
+
+let timeLeft = currentDelay;
+let started = localStorage.getItem("autoStart") || "off";
+
+// ▶ Start Button (🔥 FIRST CLICK = INSTANT AD)
+function startAuto(){
+  localStorage.setItem("autoStart","on");
+
+  // 👉 First Ad instantly show
+  showAdInstant();
+}
+
+// 🎬 Instant Ad
+function showAdInstant(){
+  document.getElementById("status").innerText = "Showing Ad...";
+
+  if(typeof window.showadsbitvex === "function"){
+    window.showadsbitvex()
+      .then(()=>{
+        document.getElementById("status").innerText = "Ad Success 🎉";
+
+        // Reset delay
+        localStorage.setItem("delay", baseDelay);
+
+        setTimeout(()=>{
+          location.reload();
+        },2000);
+      })
+      .catch(()=>{
+        document.getElementById("status").innerText = "No Ad ❌";
+
+        // Increase delay
+        currentDelay += 10;
+        if(currentDelay > maxDelay) currentDelay = maxDelay;
+        localStorage.setItem("delay", currentDelay);
+
+        setTimeout(()=>{
+          location.reload();
+        },2000);
+      });
+  }
+}
+
+// 🔁 Smart Loop
+function runAuto(){
+
+  let timer = setInterval(()=>{
+
+    timeLeft--;
+    document.getElementById("timer").innerText = timeLeft;
+
+    if(timeLeft <= 0){
+      clearInterval(timer);
+
+      document.getElementById("status").innerText = "Checking Ad...";
+
+      if(typeof window.showadsbitvex === "function"){
+
+        window.showadsbitvex()
+          .then(()=>{
+            currentDelay = baseDelay;
+            localStorage.setItem("delay", currentDelay);
+
+            document.getElementById("status").innerText = "Ad Success 🎉";
+
+            setTimeout(()=>{ location.reload(); },2000);
+          })
+          .catch(()=>{
+            currentDelay += 10;
+            if(currentDelay > maxDelay) currentDelay = maxDelay;
+
+            localStorage.setItem("delay", currentDelay);
+
+            document.getElementById("status").innerText = "No Ad → Delay "+currentDelay+"s";
+
+            setTimeout(()=>{ location.reload(); },2000);
+          });
+
+      }
+    }
+
+  },1000);
+}
+
+// 🔥 Auto start after reload
+if(started === "on"){
+  runAuto();
+}
+</script>
+
+</body>
+</html>
